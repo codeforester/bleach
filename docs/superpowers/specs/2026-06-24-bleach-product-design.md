@@ -22,8 +22,8 @@ The repository is a normal Base project:
 - Bleach owns its own code, dependencies, tests, learned profile storage, and
   product-specific setup.
 
-The repo starts private. Branch rulesets are a follow-up because GitHub does not
-allow repository rulesets on private repos without the required plan support.
+The repo starts public under `codeforester/bleach`. The CLI package is not
+intended for PyPI publication in the MVP.
 
 ## CLI Surface
 
