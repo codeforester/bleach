@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from bleach.learned import save_learned_profile
-from bleach.runner import redact
+from bleach.runner import redact, verify
 
 
 SUPPORTED_PROFILES = ("ai-share", "cpa-share")
@@ -43,7 +43,8 @@ def build_parser() -> argparse.ArgumentParser:
     verify = subparsers.add_parser("verify", help="Verify files are already redacted.")
     _add_profile_argument(verify)
     verify.add_argument("inputs", metavar="INPUT", nargs="+", help="Files or directories.")
-    verify.set_defaults(handler=_not_implemented_yet)
+    verify.add_argument("--silent", action="store_true", help="Suppress ordinary INFO output.")
+    verify.set_defaults(handler=_handle_verify)
 
     return parser
 
@@ -84,6 +85,14 @@ def _handle_redact(args: argparse.Namespace) -> int:
             silent=args.silent,
             report=args.report,
         )
+    except ValueError as exc:
+        print(f"bleach: {exc}", file=sys.stderr, flush=True)
+        return 2
+
+
+def _handle_verify(args: argparse.Namespace) -> int:
+    try:
+        return verify(inputs=args.inputs, profile=args.profile, silent=args.silent)
     except ValueError as exc:
         print(f"bleach: {exc}", file=sys.stderr, flush=True)
         return 2
