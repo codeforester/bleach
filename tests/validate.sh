@@ -28,6 +28,7 @@ done
   exit 1
 }
 
-PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}" python -m unittest discover -s tests -p 'test_*.py'
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/bleach-uv-cache}"
+PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}" uv run python -m unittest discover -s tests -p 'test_*.py'
 
 printf 'Repository baseline is present.\n'
