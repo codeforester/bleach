@@ -4,13 +4,16 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
+from openpyxl import load_workbook
+
 from bleach.detectors import Span, detect_text
 from bleach.learned import LearnedValue
 from bleach.masking import mask_value
 
 
 TEXT_EXTENSIONS = {".txt", ".log", ".md", ".csv", ".tsv"}
-SUPPORTED_EXTENSIONS = TEXT_EXTENSIONS
+XLSX_EXTENSIONS = {".xlsx"}
+SUPPORTED_EXTENSIONS = TEXT_EXTENSIONS | XLSX_EXTENSIONS
 
 
 def process_file(
@@ -22,6 +25,8 @@ def process_file(
 ) -> dict[str, int]:
     if source.suffix.lower() in TEXT_EXTENSIONS:
         return _process_text_file(source, dest, profile=profile, learned_values=learned_values)
+    if source.suffix.lower() in XLSX_EXTENSIONS:
+        return _process_xlsx_file(source, dest, profile=profile, learned_values=learned_values)
     raise ValueError("unsupported file type")
 
 
@@ -35,6 +40,8 @@ def verify_file(
         text = path.read_text(encoding="utf-8")
         spans = detect_text(text, profile=profile, learned_values=learned_values)
         return dict(Counter(span.kind for span in spans))
+    if path.suffix.lower() in XLSX_EXTENSIONS:
+        return _verify_xlsx_file(path, profile=profile, learned_values=learned_values)
     raise ValueError("unsupported file type")
 
 
@@ -62,6 +69,48 @@ def _process_text_file(
     return counts
 
 
+def _process_xlsx_file(
+    source: Path,
+    dest: Path,
+    *,
+    profile: str,
+    learned_values: list[LearnedValue],
+) -> dict[str, int]:
+    workbook = load_workbook(source)
+    counts: Counter[str] = Counter()
+    for sheet in workbook.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, str):
+                    redacted, detected = redact_text(
+                        cell.value,
+                        profile=profile,
+                        learned_values=learned_values,
+                    )
+                    if detected:
+                        cell.value = redacted
+                        counts.update(detected)
+    _atomic_save_workbook(dest, workbook)
+    return dict(counts)
+
+
+def _verify_xlsx_file(
+    path: Path,
+    *,
+    profile: str,
+    learned_values: list[LearnedValue],
+) -> dict[str, int]:
+    workbook = load_workbook(path, data_only=False)
+    counts: Counter[str] = Counter()
+    for sheet in workbook.worksheets:
+        for row in sheet.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, str):
+                    spans = detect_text(cell.value, profile=profile, learned_values=learned_values)
+                    counts.update(span.kind for span in spans)
+    return dict(counts)
+
+
 def _replace_spans(text: str, spans: list[Span], profile: str) -> str:
     result = text
     for span in sorted(spans, key=lambda item: item.start, reverse=True):
@@ -83,4 +132,12 @@ def _atomic_write(dest: Path, text: str) -> None:
     ) as handle:
         temp_path = Path(handle.name)
         handle.write(text)
+    temp_path.replace(dest)
+
+
+def _atomic_save_workbook(dest: Path, workbook) -> None:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(suffix=".xlsx", dir=dest.parent, delete=False) as handle:
+        temp_path = Path(handle.name)
+    workbook.save(temp_path)
     temp_path.replace(dest)
