@@ -1,0 +1,10 @@
+[project]
+name = "bleach"
+version = "0.1.0"
+description = "Local offline PII redaction CLI for Base-managed workspaces."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
