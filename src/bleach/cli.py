@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from bleach.learned import save_learned_profile
+from bleach.runner import redact
 
 
 SUPPORTED_PROFILES = ("ai-share", "cpa-share")
@@ -35,7 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
     redact.add_argument("-o", "--output-dir", required=True, help="Output directory.")
     redact.add_argument("--force", action="store_true", help="Reprocess existing outputs.")
     redact.add_argument("--silent", action="store_true", help="Suppress ordinary INFO output.")
-    redact.set_defaults(handler=_not_implemented_yet)
+    redact.add_argument("--report", help="Write JSON report to this path.")
+    redact.set_defaults(handler=_handle_redact)
 
     verify = subparsers.add_parser("verify", help="Verify files are already redacted.")
     _add_profile_argument(verify)
@@ -69,6 +72,21 @@ def _handle_learn(args: argparse.Namespace) -> int:
         return 1
     print("learned 1 value" if _learned_count(args.profile) == 1 else f"learned {_learned_count(args.profile)} values")
     return 0
+
+
+def _handle_redact(args: argparse.Namespace) -> int:
+    try:
+        return redact(
+            inputs=args.inputs,
+            output_dir=args.output_dir,
+            profile=args.profile,
+            force=args.force,
+            silent=args.silent,
+            report=args.report,
+        )
+    except ValueError as exc:
+        print(f"bleach: {exc}", file=sys.stderr, flush=True)
+        return 2
 
 
 def _learned_count(profile: str) -> int:
