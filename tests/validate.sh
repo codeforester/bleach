@@ -23,4 +23,12 @@ for file in "${required_files[@]}"; do
   }
 done
 
+[[ -x bin/bleach ]] || {
+  printf 'Missing executable launcher: bin/bleach\n' >&2
+  exit 1
+}
+
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${TMPDIR:-/tmp}/bleach-uv-cache}"
+PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}" uv run python -m unittest discover -s tests -p 'test_*.py'
+
 printf 'Repository baseline is present.\n'

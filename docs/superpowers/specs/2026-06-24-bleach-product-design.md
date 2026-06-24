@@ -188,7 +188,7 @@ and error details without raw PII.
 
 The MVP includes:
 
-- Independent private `codeforester/bleach` repo.
+- Independent public `codeforester/bleach` repo.
 - Base-managed project baseline.
 - Python/uv project setup.
 - `learn`, `redact`, and `verify` command surfaces.

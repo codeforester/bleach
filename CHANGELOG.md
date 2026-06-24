@@ -10,3 +10,9 @@ and versions are tracked in the repo-root `VERSION` file.
 ### Added
 
 - Initialized the repository with the Base-managed repo baseline.
+- Added the MVP `bleach` CLI with `learn`, `redact`, and `verify`.
+- Added local learned PII profile storage under `~/.base.d/bleach`.
+- Added built-in regex detectors, masking profiles, JSON reports, manifests,
+  incremental redaction, and verification.
+- Added redaction support for text, delimited text, `.xlsx`, and text-layer PDF
+  files.

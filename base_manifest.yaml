@@ -9,3 +9,10 @@ python:
 test:
   command: ./tests/validate.sh
   runner: uv
+
+commands:
+  bleach:
+    command: ./bin/bleach
+  validate:
+    command: ./tests/validate.sh
+    runner: uv
