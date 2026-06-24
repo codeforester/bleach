@@ -23,4 +23,11 @@ for file in "${required_files[@]}"; do
   }
 done
 
+[[ -x bin/bleach ]] || {
+  printf 'Missing executable launcher: bin/bleach\n' >&2
+  exit 1
+}
+
+PYTHONPATH="${PWD}/src${PYTHONPATH:+:${PYTHONPATH}}" python -m unittest discover -s tests -p 'test_*.py'
+
 printf 'Repository baseline is present.\n'

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+project_root="$(cd "${script_dir}/.." && pwd -P)"
+
+cd "$project_root"
+export PYTHONPATH="${project_root}/src${PYTHONPATH:+:${PYTHONPATH}}"
+exec uv run python -m bleach.cli "$@"
