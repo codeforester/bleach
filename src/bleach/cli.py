@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Sequence
+from pathlib import Path
+
+from bleach.learned import save_learned_profile
 
 
 SUPPORTED_PROFILES = ("ai-share", "cpa-share")
@@ -24,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     learn = subparsers.add_parser("learn", help="Persist learned PII for a profile.")
     _add_profile_argument(learn)
     learn.add_argument("--pii-file", required=True, help="Path to key-value PII file.")
-    learn.set_defaults(handler=_not_implemented_yet)
+    learn.set_defaults(handler=_handle_learn)
 
     redact = subparsers.add_parser("redact", help="Redact supported input files.")
     _add_profile_argument(redact)
@@ -53,6 +56,25 @@ def _add_profile_argument(parser: argparse.ArgumentParser) -> None:
 
 def _not_implemented_yet(_args: argparse.Namespace) -> int:
     return 0
+
+
+def _handle_learn(args: argparse.Namespace) -> int:
+    try:
+        save_learned_profile(args.profile, Path(args.pii_file))
+    except OSError as exc:
+        print(f"bleach: failed to learn PII values: {exc.strerror}", flush=True)
+        return 1
+    except ValueError as exc:
+        print(f"bleach: failed to learn PII values: {exc}", flush=True)
+        return 1
+    print("learned 1 value" if _learned_count(args.profile) == 1 else f"learned {_learned_count(args.profile)} values")
+    return 0
+
+
+def _learned_count(profile: str) -> int:
+    from bleach.learned import load_learned_values
+
+    return len(load_learned_values(profile))
 
 
 def main(argv: Sequence[str] | None = None) -> int:
