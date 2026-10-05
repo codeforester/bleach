@@ -12,6 +12,7 @@ required_files=(
   pyproject.toml
   uv.lock
   docs/superpowers/specs/2026-06-24-bleach-product-design.md
+  .github/workflows/issue-branch-policy.yml
   .github/workflows/project-intake.yml
   .github/workflows/tests.yml
 )
